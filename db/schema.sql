@@ -1,7 +1,7 @@
 create extension if not exists "pgcrypto";
-create type user_role as enum ('applicant','reviewer','supervisor','compliance_admin');
-create type case_status as enum ('draft','processing','review_required','approved','rejected','escalated','closed');
-create type exception_severity as enum ('low','medium','high','critical');
+do $$ begin create type user_role as enum ('applicant','reviewer','supervisor','compliance_admin'); exception when duplicate_object then null; end $$;
+do $$ begin create type case_status as enum ('draft','processing','review_required','approved','rejected','escalated','closed'); exception when duplicate_object then null; end $$;
+do $$ begin create type exception_severity as enum ('low','medium','high','critical'); exception when duplicate_object then null; end $$;
 create table if not exists organisations (id uuid primary key default gen_random_uuid(), name text not null, created_at timestamptz not null default now());
 create table if not exists users (id uuid primary key default gen_random_uuid(), organisation_id uuid not null references organisations(id), email text not null, password_hash text not null, display_name text not null, role user_role not null default 'applicant', active boolean not null default true, last_login_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), unique(organisation_id,email));
 create table if not exists cases (id uuid primary key default gen_random_uuid(), organisation_id uuid not null references organisations(id), case_number text not null, title text not null, document_type text not null, status case_status not null default 'draft', risk exception_severity not null default 'low', confidence numeric(5,2), assigned_to uuid references users(id), version integer not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), deleted_at timestamptz, unique(organisation_id,case_number));
