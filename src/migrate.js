@@ -1,0 +1,13 @@
+import fs from 'fs/promises';
+import bcrypt from 'bcrypt';
+import { pool } from './db.js';
+if (!pool) throw new Error('DATABASE_URL must be configured before running migrations.');
+const sql = await fs.readFile(new URL('../db/schema.sql', import.meta.url), 'utf8');
+await pool.query(sql);
+const organisation = await pool.query("insert into organisations (name) values ('Arbor Medical') on conflict do nothing returning id");
+const orgId = organisation.rows[0]?.id || (await pool.query("select id from organisations where name='Arbor Medical' limit 1")).rows[0].id;
+const hash = await bcrypt.hash('reviewer123', 12);
+const user = await pool.query("insert into users (organisation_id,email,password_hash,display_name,role) values ($1,'sofia@arbormedical.com',$2,'Sofia Clark','reviewer') on conflict (organisation_id,email) do update set password_hash=excluded.password_hash returning id", [orgId, hash]);
+const caseCount = await pool.query('select count(*)::int as count from cases where organisation_id=$1', [orgId]);
+if (!caseCount.rows[0].count) await pool.query("insert into cases (organisation_id,case_number,title,document_type,status,risk,confidence,assigned_to) values ($1,'CAS-24081','Infusion Pump — Design Verification','Test report','review_required','high',94,$2),($1,'CAS-24080','Sterile Catheter — Supplier Certificate','Certificate','approved','medium',98,$2)", [orgId, user.rows[0].id]);
+await pool.end(); console.log('Database schema and demo account applied.');
