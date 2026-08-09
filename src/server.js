@@ -22,13 +22,23 @@ const rolePermissions = {
   compliance_admin: ['dashboard:read', 'documents:create', 'cases:read', 'cases:decide', 'exceptions:review', 'ai:run', 'reports:read', 'users:read', 'users:manage', 'audit:read', 'settings:read', 'settings:manage', 'notifications:read'],
 };
 
+const isAllowedOrigin = origin => {
+  if (!origin) return true;
+  if (isLocalDevelopmentOrigin(origin)) return true;
+  if (configuredOrigins.includes(origin)) return true;
+  // Allow all Vercel preview and production deployments
+  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)) return true;
+  return false;
+};
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || configuredOrigins.includes(origin) || isLocalDevelopmentOrigin(origin)) return callback(null, true);
+    if (isAllowedOrigin(origin)) return callback(null, true);
     return callback(new Error(`Origin ${origin} is not allowed by CORS.`));
   },
   credentials: true,
 }));
+
 app.use(express.json({ limit: '10mb' }));
 
 function createError(status, code, message) {
