@@ -622,4 +622,11 @@ async function startServer() {
   app.listen(port, () => console.log(`MedFlow API listening on :${port}`));
 }
 
-startServer();
+// Only start the local HTTP server when running directly (e.g. `npm start` or `npm run dev`).
+// On Vercel, this module is imported as a serverless function and `app` is exported instead.
+const isVercel = Boolean(process.env.VERCEL) || Boolean(process.env.VERCEL_REGION);
+if (!isVercel) {
+  startServer();
+}
+
+export default app;

@@ -14,13 +14,17 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config();
 
 
+const isLocalUrl = url => /localhost|127\.0\.0\.1/.test(url);
+
 function buildConnectionConfig() {
   const databaseUrl = process.env.DATABASE_URL?.trim();
   if (databaseUrl) {
     return {
       connectionString: databaseUrl,
-      ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false },
+      ssl: isLocalUrl(databaseUrl) ? false : { rejectUnauthorized: false },
       max: 10,
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000,
     };
   }
 
@@ -38,8 +42,10 @@ function buildConnectionConfig() {
     database,
     user,
     password,
-    ssl: host === 'localhost' || host === '127.0.0.1' ? false : { rejectUnauthorized: false },
+    ssl: isLocalUrl(`${host}:${port}`) ? false : { rejectUnauthorized: false },
     max: 10,
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 30000,
   };
 }
 
