@@ -7,7 +7,12 @@ import { fileURLToPath } from 'url';
 
 const { Pool } = pg;
 const backendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// Try multiple locations so .env works from any working directory
 dotenv.config({ path: path.join(backendDir, '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config();
+
 
 function buildConnectionConfig() {
   const databaseUrl = process.env.DATABASE_URL?.trim();
