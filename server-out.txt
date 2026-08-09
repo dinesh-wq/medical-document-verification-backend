@@ -1,0 +1,2 @@
+Database bootstrapped successfully.
+MedFlow API listening on :4000
